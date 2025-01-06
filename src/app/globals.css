@@ -40,3 +40,21 @@ a {
     color-scheme: dark;
   }
 }
+.flower {
+  width: 30px;
+  height: 30px;
+  background-image: url('/flower.png'); /* Sti til blomsterbildet */
+  background-size: cover;
+  animation: riseAndFade 3s forwards; /* Animasjon: stig opp og forsvinn */
+}
+
+@keyframes riseAndFade {
+  0% {
+    transform: translateY(0); /* Startposisjon */
+    opacity: 1; /* Full synlighet */
+  }
+  100% {
+    transform: translateY(-50px); /* Flytt opp */
+    opacity: 0; /* Forsvinn */
+  }
+}
