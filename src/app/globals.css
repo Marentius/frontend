@@ -58,3 +58,95 @@ a {
     opacity: 0; /* Forsvinn */
   }
 }
+
+.marker {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.marker:hover {
+  transform: scale(1.2);
+}
+
+.leaflet-container {
+  background-color: #f0f0f0;
+}
+
+.info {
+  padding: 6px 8px;
+  font: 14px/16px Arial, Helvetica, sans-serif;
+  background: white;
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 5px;
+}
+
+.info h4 {
+  margin: 0 0 5px;
+  color: #777;
+}
+
+.controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.fylke-select {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+  background-color: white;
+}
+
+.fylke-select:focus {
+  outline: none;
+  border-color: #74c476;
+}
+
+.kommune-select {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+  background-color: white;
+}
+
+.kommune-select:focus {
+  outline: none;
+  border-color: #74c476;
+}
+
+.norge-button {
+  padding: 8px 16px;
+  font-size: 16px;
+  background-color: #74c476;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.norge-button:hover {
+  background-color: #41ab5d;
+}
+
+.norge-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(116, 196, 118, 0.5);
+}

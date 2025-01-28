@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import NorwayMap from "./components/NorwayMap";
+import MapWrapper from './components/MapWrapper';
 
 export default function Home() {
   const [sales, setSales] = useState([]);
@@ -39,10 +39,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <h1>Salgskart for Norge</h1>
-      <NorwayMap sales={sales} />
-    </div>
+    <main>
+      <MapWrapper sales={sales} />
+    </main>
   );
 }
 
