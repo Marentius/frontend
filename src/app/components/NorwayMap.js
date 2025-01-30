@@ -1,69 +1,32 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import '../styles/map.css';
+import '../styles/flower.css';
+
+import { norgeStyle, getFylkeStyle, getKommuneStyle } from '../utils/mapStyles';
+import { getStoreLocation } from '../utils/storeLocations';
+import { setupWebSocket, closeWebSocket } from '../services/websocketService';
+import MapController from './MapController';
+import { fylkeKommuneMapping } from '../utils/constants';
+import SaleMarker from './SaleMarker';
+import { loadStoreData } from '../services/storeService';
+import StoreMarkers from './StoreMarkers';
 
 // Opprett et egendefinert ikon for blomsten
 const createFlowerIcon = () =>
   L.divIcon({
-    className: "flower-icon",
+    className: "flower-marker",
     html: `<div class="flower"></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
   });
 
-// Oppdatert fylkeKommuneMapping med korrekte fylker
-const fylkeKommuneMapping = {
-  'Agder': ['42'],
-  'Akershus': ['32'],
-  'Buskerud': ['31'],
-  'Finnmark': ['56'],
-  'Innlandet': ['34'],
-  'Møre og Romsdal': ['15'],
-  'Nordland': ['18'],
-  'Oslo': ['03'],
-  'Rogaland': ['11'],
-  'Telemark': ['40'],
-  'Troms': ['55'],
-  'Trøndelag': ['50'],
-  'Vestfold': ['39'],
-  'Vestland': ['46'],
-  'Østfold': ['31']
-};
-
-// Komponent for å kontrollere kartvisningen
-const MapController = ({ selectedFylke, selectedKommune, kommunerData, fylkerData, norgeData }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (selectedKommune && kommunerData) {
-      const kommune = kommunerData.features.find(
-        f => f.properties.name === selectedKommune
-      );
-      if (kommune) {
-        const bounds = L.geoJSON(kommune).getBounds();
-        map.fitBounds(bounds);
-      }
-    } else if (selectedFylke && selectedFylke !== 'Norge' && fylkerData) {
-      const fylke = fylkerData.features.find(
-        f => f.properties.name === selectedFylke
-      );
-      if (fylke) {
-        const bounds = L.geoJSON(fylke).getBounds();
-        map.fitBounds(bounds);
-      }
-    } else if (selectedFylke === 'Norge' && norgeData) {
-      const bounds = L.geoJSON(norgeData).getBounds();
-      map.fitBounds(bounds);
-    }
-  }, [selectedFylke, selectedKommune, kommunerData, fylkerData, norgeData, map]);
-
-  return null;
-};
-
-const NorwayMap = ({ sales }) => {
+const NorwayMap = () => {
   const [norgeData, setNorgeData] = useState(null);
   const [fylkerData, setFylkerData] = useState(null);
   const [kommunerData, setKommunerData] = useState(null);
@@ -71,9 +34,16 @@ const NorwayMap = ({ sales }) => {
   const [selectedKommune, setSelectedKommune] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [localSales, setLocalSales] = useState([]);
+  const processedSalesRef = useRef(new Set());
+  const wsRef = useRef(null);
+  const animatingRef = useRef(new Set());
   const mapRef = useRef();
   const geojsonRef = useRef();
+  const storeLocationsRef = useRef(new Map());
+  const [stores, setStores] = useState(new Map());
 
+  // Load GeoJSON data
   useEffect(() => {
     setIsLoading(true);
     Promise.all([
@@ -81,7 +51,7 @@ const NorwayMap = ({ sales }) => {
       fetch('/data/Fylker-S.geojson').then(res => res.json()),
       fetch('/data/Kommuner-S.geojson').then(res => res.json()),
     ])
-      .then(([norgeJson, fylkerJson, kommunerJson]) => {        
+      .then(([norgeJson, fylkerJson, kommunerJson]) => {
         setNorgeData(norgeJson);
         setFylkerData(fylkerJson);
         setKommunerData(kommunerJson);
@@ -96,82 +66,50 @@ const NorwayMap = ({ sales }) => {
       });
   }, []);
 
-  // Reset kommune når fylke endres
+  // Reset kommune when fylke changes
   useEffect(() => {
     setSelectedKommune('');
   }, [selectedFylke]);
 
-  const norgeStyle = {
-    fillColor: '#74c476',
-    weight: 2,
-    opacity: 1,
-    color: '#666',
-    fillOpacity: 0.2
-  };
-
-  // Oppdatert fylkeStyle for å håndtere aktive og inaktive fylker
-  const getFylkeStyle = (feature) => {
-    // Vis alle fylker i normal farge når "Norge" er valgt
-    if (selectedFylke === 'Norge') {
-      return {
-        fillColor: '#74c476',
-        weight: 2,
-        opacity: 1,
-        color: '#666',
-        fillOpacity: 0.4
-      };
-    }
-    
-    const isSelected = feature.properties.name === selectedFylke;
-    return {
-      fillColor: isSelected ? '#74c476' : '#e5e5e5',
-      weight: isSelected ? 2 : 1,
-      opacity: 1,
-      color: '#666',
-      fillOpacity: isSelected ? 0.6 : 0.2
+  // Cleanup refs on unmount
+  useEffect(() => {
+    return () => {
+      processedSalesRef.current.clear();
+      storeLocationsRef.current.clear();
     };
-  };
+  }, []);
 
-  // Ny style for kommuner
-  const getKommuneStyle = (feature) => {
-    const isSelectedFylke = fylkeKommuneMapping[selectedFylke]?.includes(
-      feature.properties.kommunenummer.substring(0, 2)
-    );
-    const isSelectedKommune = feature.properties.name === selectedKommune;
+  // WebSocket setup
+  useEffect(() => {
+    if (wsRef.current) return;
 
-    if (isSelectedKommune) {
-      return {
-        fillColor: '#74c476',
-        weight: 2,
-        opacity: 1,
-        color: '#666',
-        fillOpacity: 0.8
-      };
-    } else if (isSelectedFylke) {
-      return {
-        fillColor: '#bae4b3',
-        weight: 1,
-        opacity: 1,
-        color: '#666',
-        fillOpacity: 0.4
-      };
-    } else {
-      return {
-        fillColor: '#e5e5e5',
-        weight: 1,
-        opacity: 1,
-        color: '#666',
-        fillOpacity: 0.1
-      };
-    }
-  };
+    wsRef.current = setupWebSocket((newSale) => {
+      setLocalSales(prevSales => {
+        if (prevSales.some(sale => sale.uniqueReceiptId === newSale.uniqueReceiptId)) {
+          return prevSales;
+        }
+        return [...prevSales, newSale];
+      });
+    }, processedSalesRef);
+
+    return () => {
+      closeWebSocket();
+      wsRef.current = null;
+    };
+  }, []);
+
+  // Load store data
+  useEffect(() => {
+    loadStoreData().then((storeData) => {
+      console.log('Butikkdata lastet');
+      setStores(storeData);
+    });
+  }, []);
 
   if (isLoading) return <div>Laster kart...</div>;
   if (error) return <div>Error: {error}</div>;
 
   const fylker = fylkerData?.features.map(f => f.properties.name) || [];
-  
-  // Oppdater filtreringen av kommuner
   const kommuner = kommunerData?.features
     .filter(k => {
       const kommunePrefix = k.properties.kommunenummer.substring(0, 2);
@@ -180,51 +118,52 @@ const NorwayMap = ({ sales }) => {
     })
     .map(k => k.properties.name) || [];
 
- 
-return (
-  <div className="map-container">
-    <div className="controls">
-      {(selectedFylke && selectedFylke !== 'Norge') && (
-        <button 
-          onClick={() => {
-            setSelectedFylke('Norge');
-            setSelectedKommune('');
-          }}
-          className="norge-button"
-        >
-          ← Hele Norge
-        </button>
-      )}
-      
-      <select 
-        value={selectedFylke} 
-        onChange={(e) => setSelectedFylke(e.target.value)}
-        className="fylke-select"
-      >
-        <option value="">Velg fylke</option>
-        {fylker.sort().map(fylke => (
-          <option key={fylke} value={fylke}>
-            {fylke}
-          </option>
-        ))}
-      </select>
+  console.log('Current localSales:', localSales);
 
-      {selectedFylke && selectedFylke !== 'Norge' && (
-        <select 
-          value={selectedKommune}
-          onChange={(e) => setSelectedKommune(e.target.value)}
-          className="kommune-select"
+  return (
+    <div className="map-container">
+      <div className="controls">
+        {(selectedFylke && selectedFylke !== 'Norge') && (
+          <button
+            onClick={() => {
+              setSelectedFylke('Norge');
+              setSelectedKommune('');
+            }}
+            className="norge-button"
+          >
+            ← Hele Norge
+          </button>
+        )}
+
+        <select
+          value={selectedFylke}
+          onChange={(e) => setSelectedFylke(e.target.value)}
+          className="fylke-select"
         >
-          <option value="">Velg kommune</option>
-          {kommuner.sort().map(kommune => (
-            <option key={kommune} value={kommune}>
-              {kommune}
+          <option value="">Velg fylke</option>
+          {fylker.sort().map(fylke => (
+            <option key={fylke} value={fylke}>
+              {fylke}
             </option>
           ))}
         </select>
-      )}
-    </div>
-      
+
+        {selectedFylke && selectedFylke !== 'Norge' && (
+          <select
+            value={selectedKommune}
+            onChange={(e) => setSelectedKommune(e.target.value)}
+            className="kommune-select"
+          >
+            <option value="">Velg kommune</option>
+            {kommuner.sort().map(kommune => (
+              <option key={kommune} value={kommune}>
+                {kommune}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
       <MapContainer
         ref={mapRef}
         center={[65, 13]}
@@ -236,29 +175,26 @@ return (
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        {!isLoading && !error && norgeData && (
-          <GeoJSON
-            data={norgeData}
-            style={norgeStyle}
-          />
+        {norgeData && (
+          <GeoJSON data={norgeData} style={norgeStyle} />
         )}
 
-        {!isLoading && !error && fylkerData && (
+        {fylkerData && (
           <GeoJSON
             ref={geojsonRef}
             data={fylkerData}
-            style={getFylkeStyle}
+            style={(feature) => getFylkeStyle(feature, selectedFylke)}
           />
         )}
 
-        {!isLoading && !error && kommunerData && selectedFylke && (
+        {kommunerData && selectedFylke && (
           <GeoJSON
             data={kommunerData}
-            style={getKommuneStyle}
+            style={(feature) => getKommuneStyle(feature, selectedFylke, selectedKommune, fylkeKommuneMapping)}
           />
         )}
 
-        <MapController 
+        <MapController
           selectedFylke={selectedFylke}
           selectedKommune={selectedKommune}
           kommunerData={kommunerData}
@@ -266,15 +202,22 @@ return (
           norgeData={norgeData}
         />
 
-        {sales.map((sale, index) => (
-          <Marker key={index} position={[sale.lat, sale.lng]} icon={createFlowerIcon()}>
-            <Popup>
-              <strong>Salg #{sale.id}</strong>
-              <br />
-              {sale.amount} NOK
-            </Popup>
-          </Marker>
-        ))}
+        <StoreMarkers stores={stores} />
+
+        {localSales.map((sale) => {
+          if (!sale || !sale.storeNo) return null;
+
+          const location = getStoreLocation(sale.storeNo, storeLocationsRef);
+          if (isNaN(location.lat) || isNaN(location.lng)) return null;
+
+          return (
+            <SaleMarker
+              key={sale.uniqueReceiptId}
+              sale={sale}
+              location={location}
+            />
+          );
+        })}
       </MapContainer>
     </div>
   );

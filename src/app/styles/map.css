@@ -1,0 +1,36 @@
+.store-marker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 400 !important;
+}
+
+.store-dot {
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Stil for tooltip */
+.leaflet-tooltip {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 401 !important;
+}
+
+/* Sikre at markør-containeren er synlig */
+.leaflet-marker-pane {
+    z-index: 400;
+}
+
+/* Sikre at tooltip-containeren er over markørene */
+.leaflet-tooltip-pane {
+    z-index: 401;
+}

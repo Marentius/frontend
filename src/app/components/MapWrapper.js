@@ -7,8 +7,8 @@ const NorwayMap = dynamic(() => import('./NorwayMap'), {
   loading: () => <div>Laster kart...</div>
 });
 
-const MapWrapper = ({ sales }) => {
-  return <NorwayMap sales={sales} />;
+const MapWrapper = () => {
+  return <NorwayMap />;
 };
 
 export default MapWrapper; 

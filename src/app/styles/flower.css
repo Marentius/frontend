@@ -1,0 +1,34 @@
+@keyframes riseAndFade {
+    0% {
+        transform: translateY(0);
+        /* Startposisjon */
+        opacity: 1;
+        /* Full synlighet */
+    }
+
+    100% {
+        transform: translateY(-50px);
+        /* Flytt opp */
+        opacity: 0;
+        /* Forsvinn */
+    }
+}
+
+.flower-marker {
+    position: relative;
+}
+
+.flower {
+    width: 30px;
+    height: 30px;
+    background-image: url('/flower.png');
+    background-size: cover;
+    animation: riseAndFade 2s ease-out forwards;
+    /* Legg til disse for å sikre smooth animasjon */
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    pointer-events: none;
+    /* Hindrer at animasjonen forstyrrer klikk-hendelser */
+    position: absolute;
+}
