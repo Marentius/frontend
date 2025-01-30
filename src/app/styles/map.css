@@ -34,3 +34,22 @@
 .leaflet-tooltip-pane {
     z-index: 401;
 }
+
+/* Legg til disse nye stilene */
+.map-with-gray-background {
+    background-color: #e5e5e5;
+}
+
+.grayscale-tiles {
+    filter: grayscale(100%) opacity(0.7);
+}
+
+/* Gjør kartet mørkere utenfor Norge */
+.leaflet-container {
+    background-color: #e5e5e5 !important;
+}
+
+/* Juster opacity på tile layer */
+.leaflet-tile-pane {
+    opacity: 0.7;
+}

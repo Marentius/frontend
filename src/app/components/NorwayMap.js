@@ -169,10 +169,12 @@ const NorwayMap = () => {
         center={[65, 13]}
         zoom={5}
         style={{ height: "100vh", width: "100%" }}
+        className="map-with-gray-background"
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          className="grayscale-tiles"
         />
 
         {norgeData && (
