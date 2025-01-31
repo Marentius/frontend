@@ -2,11 +2,23 @@ import { useEffect, useState } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 
-const storeIcon = L.icon({
-    iconUrl: '/Marker.png',
-    iconSize: [24, 24],     // størrelse på ikonet
-    iconAnchor: [12, 24],   // punktet på ikonet som skal peke på lokasjonen (midt-bunn)
-    pane: 'markerPane'
+const storeIcon = L.divIcon({
+    className: 'store-dot-icon',
+    html: `
+        <svg width="14" height="24" viewBox="0 0 24 24">
+            <circle 
+                cx="12" 
+                cy="12" 
+                r="6" 
+                fill="red" 
+                stroke="white" 
+                stroke-width="2"
+            />
+        </svg>
+    `,
+    iconSize: [12, 12],
+    iconAnchor: [12, 12],  // Sentrer ankerpunktet
+    className: 'store-dot-icon'
 });
 
 const StoreMarkers = ({ stores }) => {

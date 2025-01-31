@@ -1,45 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { Popup } from 'react-leaflet';
 import { getStoreName } from '../services/storeService';
-
-const createFlowerIcon = () =>
-    L.divIcon({
-        className: "flower-marker",
-        html: `<div class="flower"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
+import SaleRipple from './SaleRipple';
 
 const SaleMarker = ({ sale, location }) => {
-    const [isVisible, setIsVisible] = useState(true);
-    const storeName = getStoreName(sale.storeNo);
+    const [showRipple, setShowRipple] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(false);
-        }, 2000);
+        const rippleTimer = setTimeout(() => {
+            setShowRipple(false);
+        }, 1500);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(rippleTimer);
+        };
     }, []);
 
-    if (!isVisible) return null;
-
-    return (
-        <Marker
-            position={[location.lat, location.lng]}
-            icon={createFlowerIcon()}
-        >
-            <Popup>
-                <strong>{storeName || `Butikk #${sale.storeNo}`}</strong>
-                <br />
-                Beløp: {parseFloat(sale.receiptTotalIncVat).toFixed(2)} NOK
-                <br />
-                Antall varer: {sale.quantityOfItems}
-            </Popup>
-        </Marker>
-    );
+    return showRipple ? (
+        <SaleRipple position={[location.lat, location.lng]} />
+    ) : null;
 };
 
 export default SaleMarker; 

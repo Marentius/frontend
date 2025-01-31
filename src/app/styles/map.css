@@ -53,3 +53,139 @@
 .leaflet-tile-pane {
     opacity: 0.7;
 }
+
+/* Fjern grønne farger fra Norge */
+:global(.leaflet-overlay-pane path) {
+    fill: transparent !important;
+    /* Gjør fyllingsfarge gjennomsiktig */
+    stroke: #666 !important;
+    /* Mørk grå kant */
+    stroke-width: 1px !important;
+    /* Tynn strek */
+}
+
+/* Behold grå bakgrunn utenfor Norge */
+.map-with-gray-background {
+    background-color: #e5e5e5;
+}
+
+/* Gjør kartfliser grå */
+.grayscale-tiles {
+    filter: grayscale(100%) opacity(0.7);
+}
+
+/* Gjør kommunegrenser synlige men diskrete */
+:global(.leaflet-overlay-pane path[class*="kommune"]) {
+    stroke: #999 !important;
+    stroke-width: 0.5px !important;
+}
+
+/* Gjør fylkesgrenser litt tydeligere */
+:global(.leaflet-overlay-pane path[class*="fylke"]) {
+    stroke: #666 !important;
+    stroke-width: 1px !important;
+}
+
+.sale-flower {
+    position: relative;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.sale-flower svg {
+    transform-origin: center center;
+    animation: flower-grow 1.5s ease-out forwards;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+    /* Gul glød */
+}
+
+@keyframes flower-grow {
+    0% {
+        transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.store-dot-icon {
+    position: absolute;
+    pointer-events: none;
+    display: block;
+}
+
+.store-dot-icon svg {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Container for både logg og kontroller */
+.controls-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 20px;
+    z-index: 400;
+}
+
+/* Stil for kontrollene */
+.controls {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 220px;
+}
+
+.fylke-select,
+.kommune-select {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 200px;
+    background-color: white;
+}
+
+.norge-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Juster posisjonen på salgsloggen */
+.sales-log {
+    margin-left: 220px;
+    /* Gi plass til kontrollene */
+}
+
+/* Fjern de gamle stilene som kan forårsake konflikt */
+.leaflet-control-container .leaflet-top.leaflet-left {
+    position: static !important;
+}
+
+.map-controls {
+    position: fixed;
+    top: 20px;
+    right: 340px;
+    /* Plasser til venstre for salgsloggen */
+    z-index: 400;
+}

@@ -15,16 +15,7 @@ import { fylkeKommuneMapping } from '../utils/constants';
 import SaleMarker from './SaleMarker';
 import { loadStoreData } from '../services/storeService';
 import StoreMarkers from './StoreMarkers';
-
-// Opprett et egendefinert ikon for blomsten
-const createFlowerIcon = () =>
-  L.divIcon({
-    className: "flower-marker",
-    html: `<div class="flower"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-  });
+import SalesLog from './SalesLog';
 
 const NorwayMap = () => {
   const [norgeData, setNorgeData] = useState(null);
@@ -122,48 +113,6 @@ const NorwayMap = () => {
 
   return (
     <div className="map-container">
-      <div className="controls">
-        {(selectedFylke && selectedFylke !== 'Norge') && (
-          <button
-            onClick={() => {
-              setSelectedFylke('Norge');
-              setSelectedKommune('');
-            }}
-            className="norge-button"
-          >
-            ← Hele Norge
-          </button>
-        )}
-
-        <select
-          value={selectedFylke}
-          onChange={(e) => setSelectedFylke(e.target.value)}
-          className="fylke-select"
-        >
-          <option value="">Velg fylke</option>
-          {fylker.sort().map(fylke => (
-            <option key={fylke} value={fylke}>
-              {fylke}
-            </option>
-          ))}
-        </select>
-
-        {selectedFylke && selectedFylke !== 'Norge' && (
-          <select
-            value={selectedKommune}
-            onChange={(e) => setSelectedKommune(e.target.value)}
-            className="kommune-select"
-          >
-            <option value="">Velg kommune</option>
-            {kommuner.sort().map(kommune => (
-              <option key={kommune} value={kommune}>
-                {kommune}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
       <MapContainer
         ref={mapRef}
         center={[65, 13]}
@@ -221,6 +170,53 @@ const NorwayMap = () => {
           );
         })}
       </MapContainer>
+
+      <div className="controls-container">
+        <div className="map-controls">
+          <div className="controls">
+            {(selectedFylke && selectedFylke !== 'Norge') && (
+              <button
+                onClick={() => {
+                  setSelectedFylke('Norge');
+                  setSelectedKommune('');
+                }}
+                className="norge-button"
+              >
+                ← Hele Norge
+              </button>
+            )}
+
+            <select
+              value={selectedFylke}
+              onChange={(e) => setSelectedFylke(e.target.value)}
+              className="fylke-select"
+            >
+              <option value="">Velg fylke</option>
+              {fylker.sort().map(fylke => (
+                <option key={fylke} value={fylke}>
+                  {fylke}
+                </option>
+              ))}
+            </select>
+
+            {selectedFylke && selectedFylke !== 'Norge' && (
+              <select
+                value={selectedKommune}
+                onChange={(e) => setSelectedKommune(e.target.value)}
+                className="kommune-select"
+              >
+                <option value="">Velg kommune</option>
+                {kommuner.sort().map(kommune => (
+                  <option key={kommune} value={kommune}>
+                    {kommune}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+        <SalesLog sales={localSales.slice(-10)} />
+      </div>
     </div>
   );
 };
